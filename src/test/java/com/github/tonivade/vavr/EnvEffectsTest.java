@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019, Antonio Gabriel Muñoz Conejo <antoniogmc at gmail dot com>
+ * Copyright (c) 2019, Antonio Gabriel Muñoz Conejo <antoniogmc at gmail dot com>
  * Distributed under the terms of the MIT License
  */
 package com.github.tonivade.vavr;
@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +19,11 @@ public class EnvEffectsTest {
 
   @Test
   public void program() {
+    var input = new LinkedList<String>();
+    input.add("Toni");
     var output = new LinkedList<String>();
 
-    echo().provide(HasConsole.test(output));
+    echo().provide(HasConsole.test(input, output));
 
     assertEquals(List.of("what's your name?", "Hello Toni"), output);
   }
@@ -54,7 +57,7 @@ interface HasConsole {
     ZIO<R, Throwable, Nothing> println(String text);
   }
 
-  static HasConsole test(List<String> output) {
+  static HasConsole test(Queue<String> input, List<String> output) {
     return new HasConsole() {
 
       @Override
@@ -63,7 +66,7 @@ interface HasConsole {
 
           @Override
           public ZIO<R, Throwable, String> readln() {
-            return ZIO.pure("Toni");
+            return ZIO.from(input::poll);
           }
 
           @Override
