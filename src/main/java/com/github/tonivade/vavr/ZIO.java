@@ -100,6 +100,10 @@ public interface ZIO<R, E, A> {
     return from(() -> { task.run(); return nothing(); });
   }
 
+  static <R, E, A> ZIO<R, E, A> pure(Function0<A> task) {
+    return env -> Either.right(task.get());
+  }
+
   static <R, E, A> ZIO<R, E, A> pure(A value) {
     return env -> Either.right(value);
   }
