@@ -7,6 +7,7 @@ package com.github.tonivade.vavr;
 import static com.github.tonivade.vavr.Nothing.nothing;
 import static io.vavr.Function1.identity;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -16,98 +17,107 @@ public class ZIOTest {
 
   @Test
   public void mapRight() {
-    Either<Throwable, Integer> result =
-        parseInt("1").map(x -> x + 1).provide(nothing());
+    var result = parseInt("1").map(x -> x + 1).provide(nothing());
 
     assertEquals(Either.right(2), result);
   }
 
   @Test
   public void mapLeft() {
-    Either<Throwable, Integer> result =
-        parseInt("lskjdf").map(x -> x + 1).provide(nothing());
+    var result = parseInt("lskjdf").map(x -> x + 1).provide(nothing());
 
     assertEquals(NumberFormatException.class, result.getLeft().getClass());
   }
 
   @Test
   public void mapError() {
-    Either<String, Integer> result =
-        parseInt("lskjdf").mapError(Throwable::getMessage).provide(nothing());
+    var result = parseInt("lskjdf").mapError(Throwable::getMessage).provide(nothing());
 
     assertEquals(Either.left("For input string: \"lskjdf\""), result);
   }
 
   @Test
   public void flatMapRight() {
-    Either<Throwable, Integer> result =
-        parseInt("1").flatMap(x -> ZIO.pure(x + 1)).provide(nothing());
+    var result = parseInt("1").flatMap(x -> ZIO.pure(x + 1)).provide(nothing());
 
     assertEquals(Either.right(2), result);
   }
 
   @Test
   public void flatMapLeft() {
-    Either<Throwable, Integer> result =
-        parseInt("lskjdf").flatMap(x -> ZIO.pure(x + 1)).provide(nothing());
+    var result = parseInt("lskjdf").flatMap(x -> ZIO.pure(x + 1)).provide(nothing());
 
     assertEquals(NumberFormatException.class, result.getLeft().getClass());
   }
 
   @Test
   public void flatMapError() {
-    Either<String, Integer> result =
-        parseInt("lskjdf").flatMapError(e -> ZIO.raiseError(e.getMessage())).provide(nothing());
+    var result = parseInt("lskjdf").flatMapError(e -> ZIO.raiseError(e.getMessage())).provide(nothing());
 
     assertEquals(Either.left("For input string: \"lskjdf\""), result);
   }
 
   @Test
   public void bimapRight() {
-    Either<String, Integer> result =
-        parseInt("1").bimap(Throwable::getMessage, x -> x + 1).provide(nothing());
+    var result = parseInt("1").bimap(Throwable::getMessage, x -> x + 1).provide(nothing());
 
     assertEquals(Either.right(2), result);
   }
 
   @Test
   public void bimapLeft() {
-    Either<String, Integer> result =
-        parseInt("lskjdf").bimap(Throwable::getMessage, x -> x + 1).provide(nothing());
+    var result = parseInt("lskjdf").bimap(Throwable::getMessage, x -> x + 1).provide(nothing());
 
     assertEquals(Either.left("For input string: \"lskjdf\""), result);
   }
 
   @Test
   public void foldRight() {
-    Either<Nothing, Integer> result =
-        parseInt("1").fold(e -> -1, identity()).provide(nothing());
+    var result = parseInt("1").fold(e -> -1, identity()).provide(nothing());
 
     assertEquals(Either.right(1), result);
   }
 
   @Test
   public void foldLeft() {
-    Either<Nothing, Integer> result =
-        parseInt("kjsdfdf").fold(e -> -1, identity()).provide(nothing());
+    var result = parseInt("kjsdfdf").fold(e -> -1, identity()).provide(nothing());
 
     assertEquals(Either.right(-1), result);
   }
 
   @Test
   public void orElseRight() {
-    Either<Throwable, Integer> result =
-        parseInt("1").orElse(() -> ZIO.pure(2)).provide(nothing());
+    var result = parseInt("1").orElse(() -> ZIO.pure(2)).provide(nothing());
 
     assertEquals(Either.right(1), result);
   }
 
   @Test
   public void orElseLeft() {
-    Either<Throwable, Integer> result =
-        parseInt("kjsdfe").orElse(() -> ZIO.pure(2)).provide(nothing());
+    var result = parseInt("kjsdfe").orElse(() -> ZIO.pure(2)).provide(nothing());
 
     assertEquals(Either.right(2), result);
+  }
+
+  @Test
+  public void swap() {
+    var result = parseInt("asdfj").swap().provide(nothing());
+
+    assertTrue(result.get() instanceof NumberFormatException);
+  }
+
+  @Test
+  public void map2Right() {
+    var result = ZIO.map2(parseInt("1"), parseInt("2"), (a, b) -> a + b);
+
+    assertEquals(Either.right(3), result.provide(nothing()));
+  }
+
+  @Test
+  public void map2Left() {
+    var result = ZIO.map2(parseInt("1"), parseInt("jksdf"), (a, b) -> a + b).mapError(Throwable::getMessage);
+
+    assertEquals(Either.left("For input string: \"jksdf\""), result.provide(nothing()));
   }
 
   private ZIO<Nothing, Throwable, Integer> parseInt(String string) {
