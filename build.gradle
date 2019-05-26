@@ -1,0 +1,20 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+group = 'com.github.tonivade'
+archivesBaseName = 'vavr-zio'
+version = '0.1.0-SNAPSHOT'
+
+sourceCompatibility = 11
+targetCompatibility = 11
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile 'io.vavr:vavr:0.10.0'
+  testCompile 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
+  testCompile 'org.junit.platform:junit-platform-runner:1.4.2'
+}
+
