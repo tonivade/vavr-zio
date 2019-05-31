@@ -32,7 +32,7 @@ public class EnvEffectsTest {
     echo().provide(HasConsole.live());
   }
 
-  private static ZIO<HasConsole, Throwable, Nothing> echo() {
+  private static ZIO<HasConsole, Throwable, Unit> echo() {
     return HasConsole.println("what's your name?")
         .andThen(HasConsole::readln)
         .flatMap(name -> HasConsole.println("Hello " + name));
@@ -47,14 +47,14 @@ interface HasConsole {
     return ZIO.accessM(env -> env.console().readln());
   }
 
-  static ZIO<HasConsole, Throwable, Nothing> println(String text) {
+  static ZIO<HasConsole, Throwable, Unit> println(String text) {
     return ZIO.accessM(env -> env.console().println(text));
   }
 
   interface Service<R extends HasConsole> {
     ZIO<R, Throwable, String> readln();
 
-    ZIO<R, Throwable, Nothing> println(String text);
+    ZIO<R, Throwable, Unit> println(String text);
   }
 
   static HasConsole test(Queue<String> input, List<String> output) {
@@ -70,7 +70,7 @@ interface HasConsole {
           }
 
           @Override
-          public ZIO<R, Throwable, Nothing> println(String text) {
+          public ZIO<R, Throwable, Unit> println(String text) {
             return ZIO.exec(() -> output.add(text));
           }
         };
@@ -91,7 +91,7 @@ interface HasConsole {
           }
 
           @Override
-          public ZIO<R, Throwable, Nothing> println(String text) {
+          public ZIO<R, Throwable, Unit> println(String text) {
             return ZIO.exec(() -> writer().println(text));
           }
 

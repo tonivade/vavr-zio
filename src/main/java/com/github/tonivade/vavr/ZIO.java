@@ -4,7 +4,6 @@
  */
 package com.github.tonivade.vavr;
 
-import static com.github.tonivade.vavr.Nothing.nothing;
 import static io.vavr.Function1.constant;
 import static io.vavr.Function1.identity;
 
@@ -20,7 +19,7 @@ import io.vavr.control.Try;
 @FunctionalInterface
 public interface ZIO<R, E, A> {
 
-  ZIO<?, ?, Nothing> UNIT = pure(nothing());
+  ZIO<?, ?, Unit> UNIT = pure(Unit.unit());
 
   Either<E, A> provide(R env);
 
@@ -96,8 +95,8 @@ public interface ZIO<R, E, A> {
     return env -> Try.of(task).toEither();
   }
 
-  static <R> ZIO<R, Throwable, Nothing> exec(CheckedRunnable task) {
-    return from(() -> { task.run(); return nothing(); });
+  static <R> ZIO<R, Throwable, Unit> exec(CheckedRunnable task) {
+    return from(() -> { task.run(); return Unit.unit(); });
   }
 
   static <R, E, A> ZIO<R, E, A> pure(Function0<A> task) {
@@ -113,8 +112,8 @@ public interface ZIO<R, E, A> {
   }
 
   @SuppressWarnings("unchecked")
-  static <R, E> ZIO<R, E, Nothing> unit() {
-    return (ZIO<R, E, Nothing>) UNIT;
+  static <R, E> ZIO<R, E, Unit> unit() {
+    return (ZIO<R, E, Unit>) UNIT;
   }
 
   private <F, B> ZIO<R, F, B> mapValue(Function1<Either<E, A>, Either<F, B>> map) {

@@ -4,7 +4,7 @@
  */
 package com.github.tonivade.vavr;
 
-import static com.github.tonivade.vavr.Nothing.nothing;
+import static com.github.tonivade.vavr.Unit.unit;
 import static java.util.Objects.requireNonNull;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -23,12 +23,12 @@ public final class Ref<A> {
     return ZIO.pure(value::get);
   }
 
-  public <R, E> ZIO<R, E, Nothing> set(A newValue) {
-    return ZIO.pure(() -> { value.set(newValue); return nothing(); });
+  public <R, E> ZIO<R, E, Unit> set(A newValue) {
+    return ZIO.pure(() -> { value.set(newValue); return unit(); });
   }
 
-  public <R, E> ZIO<R, E, Nothing> lazySet(A newValue) {
-    return ZIO.pure(() -> { value.lazySet(newValue); return nothing(); });
+  public <R, E> ZIO<R, E, Unit> lazySet(A newValue) {
+    return ZIO.pure(() -> { value.lazySet(newValue); return unit(); });
   }
 
   public <R, E> ZIO<R, E, A> getAndSet(A newValue) {
