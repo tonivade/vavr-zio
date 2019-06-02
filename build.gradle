@@ -1,5 +1,10 @@
+plugins {
+  id 'org.javamodularity.moduleplugin' version '1.5.0' apply false
+}
+
 apply plugin: 'java'
 apply plugin: 'eclipse'
+apply plugin: 'org.javamodularity.moduleplugin'
 
 group = 'com.github.tonivade'
 archivesBaseName = 'vavr-zio'
@@ -12,9 +17,13 @@ repositories {
   mavenCentral()
 }
 
+test {
+  useJUnitPlatform()
+}
+
 dependencies {
-  compile 'io.vavr:vavr:0.10.0'
-  testCompile 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
-  testCompile 'org.junit.platform:junit-platform-runner:1.4.2'
+  implementation 'io.vavr:vavr:0.10.0'
+  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.4.2'
+  testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
 }
 
