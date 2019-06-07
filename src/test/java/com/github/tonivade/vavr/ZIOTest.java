@@ -8,12 +8,9 @@ import static com.github.tonivade.vavr.Nothing.nothing;
 import static io.vavr.Function1.identity;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
 
+import io.vavr.collection.List;
 import io.vavr.control.Either;
 
 public class ZIOTest {
@@ -125,17 +122,19 @@ public class ZIOTest {
 
   @Test
   public void safeRunAsync() {
-    List<String> result = Collections.synchronizedList(new ArrayList<>());
-    ZIO<Nothing, Throwable, Unit> currentThread = ZIO.exec(() -> result.add(Thread.currentThread().getName()));
+    var ref = Ref.of(List.<String>empty());
+    var currentThread =
+        ref.updateAndGet(list -> list.append(Thread.currentThread().getName()));
 
-    ZIO<Nothing, Throwable, Unit> program = currentThread
+    var program = currentThread
         .andThen(currentThread
             .andThen(currentThread
                 .andThen(currentThread
                     .andThen(currentThread))));
 
-    program.toFuture(nothing()).get();
+    List<String> result = program.toFuture(nothing()).get().get();
 
+    System.out.println(result);
     assertEquals(5, result.size());
   }
 
