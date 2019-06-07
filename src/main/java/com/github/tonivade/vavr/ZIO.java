@@ -24,16 +24,12 @@ import io.vavr.control.Try;
 
 public interface ZIO<R, E, A> {
 
-  ZIO<?, ?, Unit> UNIT = pure(Unit.unit());
-
   Either<E, A> provide(R env);
+
+  Future<Either<E, A>> toFuture(Executor executor, R env);
 
   default Future<Either<E, A>> toFuture(R env) {
     return toFuture(DEFAULT_EXECUTOR, env);
-  }
-
-  default Future<Either<E, A>> toFuture(Executor executor, R env) {
-    return Future.of(executor, () -> provide(env));
   }
 
   default void provideAsync(R env, Consumer<? super Try<Either<E, A>>> consumer) {
@@ -137,7 +133,7 @@ public interface ZIO<R, E, A> {
 
   @SuppressWarnings("unchecked")
   static <R, E> ZIO<R, E, Unit> unit() {
-    return (ZIO<R, E, Unit>) UNIT;
+    return (ZIO<R, E, Unit>) ZIOModule.UNIT;
   }
 
   final class Pure<R, E, A> implements ZIO<R, E, A> {
@@ -151,6 +147,11 @@ public interface ZIO<R, E, A> {
     @Override
     public Either<E, A> provide(R env) {
       return Either.right(value);
+    }
+
+    @Override
+    public Future<Either<E, A>> toFuture(Executor executor, R env) {
+      return Future.successful(executor, Either.right(value));
     }
 
     @SuppressWarnings("exports")
@@ -176,6 +177,11 @@ public interface ZIO<R, E, A> {
     @Override
     public Either<E, A> provide(R env) {
       return Either.left(error);
+    }
+
+    @Override
+    public Future<Either<E, A>> toFuture(Executor executor, R env) {
+      return Future.successful(executor, Either.left(error));
     }
 
     @SuppressWarnings("exports")
@@ -207,8 +213,14 @@ public interface ZIO<R, E, A> {
     @Override
     public Either<F, B> provide(R env) {
       var fold = current.provide(env).bimap(nextError, next);
-      ZIO<R, F, B> result = fold.fold(identity(), identity());
-      return result.provide(env);
+      return fold.fold(identity(), identity()).provide(env);
+    }
+
+    @Override
+    public Future<Either<F, B>> toFuture(Executor executor, R env) {
+      var future = current.toFuture(executor, env);
+      var flatMap = future.flatMap(either -> Future.successful(executor, either.bimap(nextError, next)));
+      return flatMap.map(either -> either.fold(left -> left.provide(env), right -> right.provide(env)));
     }
 
     @SuppressWarnings("exports")
@@ -236,6 +248,11 @@ public interface ZIO<R, E, A> {
       return task.apply();
     }
 
+    @Override
+    public Future<Either<E, A>> toFuture(Executor executor, R env) {
+      return Future.of(executor, task::get);
+    }
+
     @SuppressWarnings("exports")
     @Override
     public ZIOModule getModule() {
@@ -259,6 +276,11 @@ public interface ZIO<R, E, A> {
     @Override
     public Either<A, E> provide(R env) {
       return current.provide(env).swap();
+    }
+
+    @Override
+    public Future<Either<A, E>> toFuture(Executor executor, R env) {
+      return current.toFuture(executor, env).map(Either::swap);
     }
 
     @SuppressWarnings("exports")
@@ -286,6 +308,11 @@ public interface ZIO<R, E, A> {
       return Try.of(current).toEither();
     }
 
+    @Override
+    public Future<Either<Throwable, A>> toFuture(Executor executor, R env) {
+      return Future.of(() -> Try.of(current).toEither());
+    }
+
     @SuppressWarnings("exports")
     @Override
     public ZIOModule getModule() {
@@ -309,6 +336,11 @@ public interface ZIO<R, E, A> {
     @Override
     public Either<E, A> provide(R env) {
       return function.apply(env).provide(env);
+    }
+
+    @Override
+    public Future<Either<E, A>> toFuture(Executor executor, R env) {
+      return Future.of(executor, () -> function.apply(env).provide(env));
     }
 
     @SuppressWarnings("exports")
@@ -340,6 +372,13 @@ public interface ZIO<R, E, A> {
       return current.provide(env).fold(nextError, next).provide(env);
     }
 
+    @Override
+    public Future<Either<F, B>> toFuture(Executor executor, R env) {
+      Future<Either<E, A>> future = current.toFuture(executor, env);
+      Future<ZIO<R, F, B>> map = future.map(either -> either.fold(nextError, next));
+      return map.map(zio -> provide(env));
+    }
+
     @SuppressWarnings("exports")
     @Override
     public ZIOModule getModule() {
@@ -353,4 +392,6 @@ public interface ZIO<R, E, A> {
   }
 }
 
-interface ZIOModule { }
+interface ZIOModule {
+  ZIO<?, ?, Unit> UNIT = ZIO.pure(Unit.unit());
+}
