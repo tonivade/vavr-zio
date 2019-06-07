@@ -26,7 +26,7 @@ public class RefTest {
   public void set() {
     var ref = Ref.of("Hello World!");
 
-    var result = ref.set("Something else").andThen(ref::get);
+    var result = ref.set("Something else").andThen(ref.get());
 
     assertEquals(Either.right("Something else"), result.provide(nothing()));
   }
@@ -35,7 +35,7 @@ public class RefTest {
   public void lazySet() {
     var ref = Ref.of("Hello World!");
 
-    var result = ref.lazySet("Something else").andThen(ref::get);
+    var result = ref.lazySet("Something else").andThen(ref.get());
 
     assertEquals(Either.right("Something else"), result.provide(nothing()));
   }
@@ -45,7 +45,7 @@ public class RefTest {
     var ref = Ref.of("Hello World!");
 
     var result = ref.getAndSet("Something else");
-    var afterUpdate = result.andThen(ref::get);
+    var afterUpdate = result.andThen(ref.get());
 
     assertEquals(Either.right("Hello World!"), result.provide(nothing()));
     assertEquals(Either.right("Something else"), afterUpdate.provide(nothing()));
@@ -56,7 +56,7 @@ public class RefTest {
     var ref = Ref.of("Hello World!");
 
     var result = ref.getAndUpdate(String::toUpperCase);
-    var afterUpdate = result.andThen(ref::get);
+    var afterUpdate = result.andThen(ref.get());
 
     assertEquals(Either.right("Hello World!"), result.provide(nothing()));
     assertEquals(Either.right("HELLO WORLD!"), afterUpdate.provide(nothing()));

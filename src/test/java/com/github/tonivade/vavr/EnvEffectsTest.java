@@ -34,7 +34,7 @@ public class EnvEffectsTest {
 
   private static ZIO<HasConsole, Throwable, Unit> echo() {
     return HasConsole.println("what's your name?")
-        .andThen(HasConsole::readln)
+        .andThen(HasConsole.readln())
         .flatMap(name -> HasConsole.println("Hello " + name));
   }
 }

@@ -64,8 +64,8 @@ public interface ZIO<R, E, A> {
     return new FlatMapped<>(this, mapError.andThen(ZIO::failure), map.andThen(ZIO::pure));
   }
 
-  default <B> ZIO<R, E, B> andThen(Function0<ZIO<R, E, B>> next) {
-    return flatMap(ignore -> next.get());
+  default <B> ZIO<R, E, B> andThen(ZIO<R, E, B> next) {
+    return flatMap(ignore -> next);
   }
 
   default <B, F> ZIO<R, F, B> foldM(Function1<E, ZIO<R, F, B>> mapError, Function1<A, ZIO<R, F, B>> map) {

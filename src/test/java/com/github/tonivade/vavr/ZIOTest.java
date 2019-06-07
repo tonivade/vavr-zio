@@ -6,8 +6,11 @@ package com.github.tonivade.vavr;
 
 import static com.github.tonivade.vavr.Nothing.nothing;
 import static io.vavr.Function1.identity;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -118,6 +121,22 @@ public class ZIOTest {
     var result = ZIO.map2(parseInt("1"), parseInt("jksdf"), (a, b) -> a + b).mapError(Throwable::getMessage);
 
     assertEquals(Either.left("For input string: \"jksdf\""), result.provide(nothing()));
+  }
+
+  @Test
+  public void safeRunAsync() {
+    List<String> result = Collections.synchronizedList(new ArrayList<>());
+    ZIO<Nothing, Throwable, Unit> currentThread = ZIO.exec(() -> result.add(Thread.currentThread().getName()));
+
+    ZIO<Nothing, Throwable, Unit> program = currentThread
+        .andThen(currentThread
+            .andThen(currentThread
+                .andThen(currentThread
+                    .andThen(currentThread))));
+
+    program.toFuture(nothing()).get();
+
+    assertEquals(5, result.size());
   }
 
   private ZIO<Nothing, Throwable, Integer> parseInt(String string) {
