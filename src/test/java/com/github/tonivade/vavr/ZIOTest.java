@@ -52,7 +52,7 @@ public class ZIOTest {
 
   @Test
   public void flatMapError() {
-    var result = parseInt("lskjdf").flatMapError(e -> ZIO.raiseError(e.getMessage())).provide(nothing());
+    var result = parseInt("lskjdf").flatMapError(e -> ZIO.failure(e.getMessage())).provide(nothing());
 
     assertEquals(Either.left("For input string: \"lskjdf\""), result);
   }
