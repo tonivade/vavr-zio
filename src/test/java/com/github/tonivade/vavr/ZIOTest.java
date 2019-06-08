@@ -132,10 +132,9 @@ public class ZIOTest {
                 .andThen(currentThread
                     .andThen(currentThread))));
 
-    List<String> result = program.toFuture(nothing()).get().get();
+    var result = program.toFuture(nothing()).get();
 
-    System.out.println(result);
-    assertEquals(5, result.size());
+    assertEquals(Either.right(5), result.map(List::size));
   }
 
   private ZIO<Nothing, Throwable, Integer> parseInt(String string) {
