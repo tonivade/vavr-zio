@@ -220,7 +220,7 @@ public interface ZIO<R, E, A> {
     public Future<Either<F, B>> toFuture(Executor executor, R env) {
       var future = current.toFuture(executor, env);
       var flatMap = future.flatMap(either -> Future.successful(executor, either.bimap(nextError, next)));
-      return flatMap.map(either -> either.fold(left -> left.provide(env), right -> right.provide(env)));
+      return flatMap.flatMap(either -> either.fold(identity(), identity()).toFuture(executor, env));
     }
 
     @SuppressWarnings("exports")
@@ -340,7 +340,8 @@ public interface ZIO<R, E, A> {
 
     @Override
     public Future<Either<E, A>> toFuture(Executor executor, R env) {
-      return Future.of(executor, () -> function.apply(env).provide(env));
+      return Future.of(executor, () -> function.apply(env))
+          .flatMap(zio -> zio.toFuture(executor, env));
     }
 
     @SuppressWarnings("exports")
