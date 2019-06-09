@@ -377,7 +377,7 @@ public interface ZIO<R, E, A> {
     public Future<Either<F, B>> toFuture(Executor executor, R env) {
       Future<Either<E, A>> future = current.toFuture(executor, env);
       Future<ZIO<R, F, B>> map = future.map(either -> either.fold(nextError, next));
-      return map.map(zio -> provide(env));
+      return map.flatMap(zio -> zio.toFuture(executor, env));
     }
 
     @SuppressWarnings("exports")
