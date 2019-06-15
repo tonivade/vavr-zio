@@ -23,6 +23,7 @@ test {
 
 dependencies {
   implementation 'io.vavr:vavr:0.10.0'
+  implementation 'io.reactivex.rxjava2:rxjava:2.2.9'
   testImplementation 'org.junit.jupiter:junit-jupiter-api:5.4.2'
   testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
 }

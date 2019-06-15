@@ -8,10 +8,14 @@ import static com.github.tonivade.vavr.Nothing.nothing;
 import static io.vavr.Function1.identity;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.concurrent.Executors;
+
 import org.junit.jupiter.api.Test;
 
 import io.vavr.collection.List;
 import io.vavr.control.Either;
+
+import io.reactivex.schedulers.Schedulers;
 
 public class ZIOTest {
 
@@ -121,7 +125,7 @@ public class ZIOTest {
   }
 
   @Test
-  public void safeRunAsync() {
+  public void safeRunAsyncFuture() {
     var ref = Ref.of(List.<String>empty());
     var currentThread =
         ref.updateAndGet(list -> list.append(Thread.currentThread().getName()));
@@ -133,6 +137,24 @@ public class ZIOTest {
                     .andThen(currentThread))));
 
     var result = program.toFuture(nothing()).get();
+
+    assertEquals(Either.right(5), result.map(List::size));
+  }
+
+  @Test
+  public void safeRunAsyncObservable() {
+    var scheduler = Schedulers.from(Executors.newFixedThreadPool(2));
+    var ref = Ref.of(List.<String>empty());
+    var currentThread =
+        ref.updateAndGet(list -> list.append(Thread.currentThread().getName()));
+
+    var program = currentThread
+        .andThen(currentThread
+            .andThen(currentThread
+                .andThen(currentThread
+                    .andThen(currentThread))));
+
+    var result = program.toObservable(nothing()).observeOn(scheduler).blockingSingle();
 
     assertEquals(Either.right(5), result.map(List::size));
   }

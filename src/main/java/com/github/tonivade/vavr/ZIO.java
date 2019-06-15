@@ -12,6 +12,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
+import io.reactivex.Observable;
 import io.vavr.CheckedFunction0;
 import io.vavr.CheckedFunction1;
 import io.vavr.CheckedRunnable;
@@ -27,7 +28,9 @@ public interface ZIO<R, E, A> {
   Either<E, A> provide(R env);
 
   Future<Either<E, A>> toFuture(Executor executor, R env);
-
+  
+  Observable<Either<E, A>> toObservable(R env);
+  
   default Future<Either<E, A>> toFuture(R env) {
     return toFuture(DEFAULT_EXECUTOR, env);
   }
@@ -153,6 +156,11 @@ public interface ZIO<R, E, A> {
     public Future<Either<E, A>> toFuture(Executor executor, R env) {
       return Future.successful(executor, Either.right(value));
     }
+    
+    @Override
+    public Observable<Either<E, A>> toObservable(R env) {
+      return Observable.just(Either.right(value));
+    }
 
     @SuppressWarnings("exports")
     @Override
@@ -182,6 +190,11 @@ public interface ZIO<R, E, A> {
     @Override
     public Future<Either<E, A>> toFuture(Executor executor, R env) {
       return Future.successful(executor, Either.left(error));
+    }
+    
+    @Override
+    public Observable<Either<E, A>> toObservable(R env) {
+      return Observable.just(Either.left(error));
     }
 
     @SuppressWarnings("exports")
@@ -222,6 +235,13 @@ public interface ZIO<R, E, A> {
       var flatMap = future.flatMap(either -> Future.successful(executor, either.bimap(nextError, next)));
       return flatMap.flatMap(either -> either.fold(identity(), identity()).toFuture(executor, env));
     }
+    
+    @Override
+    public Observable<Either<F, B>> toObservable(R env) {
+      var observable = current.toObservable(env);
+      var flatMap = observable.flatMap(either -> Observable.just(either.bimap(nextError, next)));
+      return flatMap.flatMap(either -> either.fold(identity(), identity()).toObservable(env));
+    }
 
     @SuppressWarnings("exports")
     @Override
@@ -251,6 +271,11 @@ public interface ZIO<R, E, A> {
     @Override
     public Future<Either<E, A>> toFuture(Executor executor, R env) {
       return Future.of(executor, task::get);
+    }
+    
+    @Override
+    public Observable<Either<E, A>> toObservable(R env) {
+      return Observable.fromCallable(task::get);
     }
 
     @SuppressWarnings("exports")
@@ -282,6 +307,11 @@ public interface ZIO<R, E, A> {
     public Future<Either<A, E>> toFuture(Executor executor, R env) {
       return current.toFuture(executor, env).map(Either::swap);
     }
+    
+    @Override
+    public Observable<Either<A, E>> toObservable(R env) {
+      return current.toObservable(env).map(Either::swap);
+    }
 
     @SuppressWarnings("exports")
     @Override
@@ -311,6 +341,11 @@ public interface ZIO<R, E, A> {
     @Override
     public Future<Either<Throwable, A>> toFuture(Executor executor, R env) {
       return Future.of(() -> Try.of(current).toEither());
+    }
+    
+    @Override
+    public Observable<Either<Throwable, A>> toObservable(R env) {
+      return Observable.fromCallable(() -> Try.of(current).toEither());
     }
 
     @SuppressWarnings("exports")
@@ -342,6 +377,12 @@ public interface ZIO<R, E, A> {
     public Future<Either<E, A>> toFuture(Executor executor, R env) {
       return Future.of(executor, () -> function.apply(env))
           .flatMap(zio -> zio.toFuture(executor, env));
+    }
+    
+    @Override
+    public Observable<Either<E, A>> toObservable(R env) {
+      return Observable.fromCallable(() -> function.apply(env))
+          .flatMap(zio -> zio.toObservable(env));
     }
 
     @SuppressWarnings("exports")
@@ -378,6 +419,13 @@ public interface ZIO<R, E, A> {
       Future<Either<E, A>> future = current.toFuture(executor, env);
       Future<ZIO<R, F, B>> map = future.map(either -> either.fold(nextError, next));
       return map.flatMap(zio -> zio.toFuture(executor, env));
+    }
+    
+    @Override
+    public Observable<Either<F, B>> toObservable(R env) {
+      var observable = current.toObservable(env);
+      var map = observable.map(either -> either.fold(nextError, next));
+      return map.flatMap(zio -> zio.toObservable(env));
     }
 
     @SuppressWarnings("exports")
