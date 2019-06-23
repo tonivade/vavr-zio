@@ -225,22 +225,22 @@ public interface ZIO<R, E, A> {
 
     @Override
     public Either<F, B> provide(R env) {
-      var fold = current.provide(env).bimap(nextError, next);
-      return fold.fold(identity(), identity()).provide(env);
+      var bimap = current.provide(env).bimap(nextError, next);
+      return bimap.fold(identity(), identity()).provide(env);
     }
 
     @Override
     public Future<Either<F, B>> toFuture(Executor executor, R env) {
       var future = current.toFuture(executor, env);
-      var flatMap = future.flatMap(either -> Future.successful(executor, either.bimap(nextError, next)));
-      return flatMap.flatMap(either -> either.fold(identity(), identity()).toFuture(executor, env));
+      var bimap = future.map(either -> either.bimap(nextError, next));
+      return bimap.flatMap(either -> either.fold(identity(), identity()).toFuture(executor, env));
     }
     
     @Override
     public Observable<Either<F, B>> toObservable(R env) {
       var observable = current.toObservable(env);
-      var flatMap = observable.flatMap(either -> Observable.just(either.bimap(nextError, next)));
-      return flatMap.flatMap(either -> either.fold(identity(), identity()).toObservable(env));
+      var bimap = observable.map(either -> either.bimap(nextError, next));
+      return bimap.flatMap(either -> either.fold(identity(), identity()).toObservable(env));
     }
 
     @SuppressWarnings("exports")
@@ -340,7 +340,7 @@ public interface ZIO<R, E, A> {
 
     @Override
     public Future<Either<Throwable, A>> toFuture(Executor executor, R env) {
-      return Future.of(() -> Try.of(current).toEither());
+      return Future.of(executor, () -> Try.of(current).toEither());
     }
     
     @Override
@@ -416,8 +416,8 @@ public interface ZIO<R, E, A> {
 
     @Override
     public Future<Either<F, B>> toFuture(Executor executor, R env) {
-      Future<Either<E, A>> future = current.toFuture(executor, env);
-      Future<ZIO<R, F, B>> map = future.map(either -> either.fold(nextError, next));
+      var future = current.toFuture(executor, env);
+      var map = future.map(either -> either.fold(nextError, next));
       return map.flatMap(zio -> zio.toFuture(executor, env));
     }
     
