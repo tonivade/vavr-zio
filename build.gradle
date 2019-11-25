@@ -1,5 +1,5 @@
 plugins {
-  id 'org.javamodularity.moduleplugin' version '1.5.0' apply false
+  id 'org.javamodularity.moduleplugin' version '1.6.0' apply false
 }
 
 apply plugin: 'java'
@@ -22,9 +22,10 @@ test {
 }
 
 dependencies {
-  implementation 'io.vavr:vavr:0.10.0'
-  implementation 'io.reactivex.rxjava2:rxjava:2.2.9'
-  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.4.2'
-  testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
+  implementation 'io.vavr:vavr:0.10.1'
+  implementation 'io.reactivex.rxjava2:rxjava:2.2.15'
+  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.2'
+  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.5.2'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.5.2'
 }
 
